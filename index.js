@@ -36,24 +36,25 @@ const getLyrics = (time) => {
   return [jp, cn]
 }
 
-function decompressFrame(frame) {
-  const width = process.stdout.columns;
-  const height = process.stdout.rows - 2;
+const width = process.stdout.columns;
+const height = process.stdout.rows - 2;
+const heightRatio = Math.floor(Math.max(90 / height, 1));
+const widthRatio = Math.max(240 / width, 1);
 
+function decompressFrame(frame) {
   let string = "";
   let lines = frame.split("\n");
 
-  const heightRatio = Math.max(90 / height, 1);
-  const widthRatio = Math.max(240 / width, 1);
-
-  lines = lines.filter((line, index) => index % Math.round(heightRatio) === 0);
-
-  for (let line of lines) {
+  for (const index in lines) {
+    if (index % heightRatio !== 0) {
+      continue;
+    }
+    let line = lines[index];
     let tokens = line.match(/.{1,5}/g);
     let CurrentLine = "";
     for (let token of tokens) {
       let multiplier = parseInt(token.substring(1));
-      char = token[0].repeat(Math.ceil(multiplier / widthRatio));
+      char = token[0].repeat((multiplier / widthRatio)|0);
       CurrentLine += char;
     }
     string += `${CurrentLine.substring(0, width)}\n`
@@ -65,7 +66,6 @@ function decompressFrame(frame) {
 const calculateTextLength = (text) => {
   let length = 0;
   for (const char of text) {
-    // 匹配中文和日文以及全角字符
     if (char.match(/[\u4e00-\u9fa5]|[\u0800-\u4e00]|[\uff00-\uffff]/)) {
       length += 2;
     } else {
