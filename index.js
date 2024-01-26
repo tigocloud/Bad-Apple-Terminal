@@ -45,8 +45,13 @@ function decompressFrame(frame) {
   let string = "";
   let lines = frame.split("\n");
 
+  let _pre = [];
+  for(let _i; _i < 100; i++){
+    _pre.push(heightRatio * _i);
+  }
+
   for (const index in lines) {
-    if (index % heightRatio !== 0) {
+    if (!_pre.includes(index)) {
       continue;
     }
     let line = lines[index];
