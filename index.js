@@ -43,8 +43,8 @@ function decompressFrame(frame) {
   let string = "";
   let lines = frame.split("\n");
 
-  const heightRatio = Math.max(Math.floor(90 / height), 1);
-  const widthRatio = Math.max(Math.floor(240 / width), 1);
+  const heightRatio = Math.max(Math.ceil(90 / height), 1);
+  const widthRatio = Math.max(Math.ceil(240 / width), 1);
 
   lines = lines.filter((line, index) => index % heightRatio === 0);
 
@@ -53,12 +53,13 @@ function decompressFrame(frame) {
     let CurrentLine = "";
     for (let token of tokens) {
       let multiplier = parseInt(token.substring(1));
-      char = token[0].repeat(multiplier * widthRatio);
+      char = token[0].repeat(Math.floor(multiplier / widthRatio));
       CurrentLine += char;
     }
     string += CurrentLine.substring(0, width);
     string += "\n";
   }
+
   return string;
 }
 
