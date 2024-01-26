@@ -2,44 +2,105 @@ const gameloop = require("node-gameloop");
 const readline = require("readline");
 const fs = require("fs");
 
-run();
+const jpLyrics = fs.readFileSync("jp.txt", "utf8").split("\n");
+const cnLyrics = fs.readFileSync("cn.txt", "utf8").split("\n");
+
+const getLyrics = (time) => {
+  let jp = ''
+  let cn = ''
+
+  for (const line of jpLyrics) {
+    let [timestamp, lyric] = line.split(']').map((s) => s.trim().replace('[', ''))
+    let [min, sec] = timestamp.split(':').map((s) => parseInt(s))
+    timestamp = min * 60 + sec
+
+    if (timestamp <= time) {
+      jp = lyric
+    } else {
+      break
+    }
+  }
+
+  for (const line of cnLyrics) {
+    let [timestamp, lyric] = line.split(']').map((s) => s.trim().replace('[', ''))
+    let [min, sec] = timestamp.split(':').map((s) => parseInt(s))
+    timestamp = min * 60 + sec
+
+    if (timestamp <= time) {
+      cn = lyric
+    } else {
+      break
+    }
+  }
+
+  return [jp, cn]
+}
 
 function decompressFrame(frame) {
-    let string = "";
-    let lines = frame.split("\n");
-    for (let line of lines) {
-        let tokens = line.match(/.{1,5}/g);
-        for (let token of tokens) {
-            let multiplier = parseInt(token.substring(1));
-            string += token[0].repeat(multiplier);
-        }
-        string += "\n";
+  const width = process.stdout.columns;
+  const height = process.stdout.rows - 2;
+
+  let string = "";
+  let lines = frame.split("\n");
+
+  const heightRatio = Math.max(Math.floor(90 / height), 1);
+  const widthRatio = Math.max(Math.floor(240 / width), 1);
+
+  lines = lines.filter((line, index) => index % heightRatio === 0);
+
+  for (let line of lines) {
+    let tokens = line.match(/.{1,5}/g);
+    let CurrentLine = "";
+    for (let token of tokens) {
+      let multiplier = parseInt(token.substring(1));
+      char = token[0].repeat(multiplier * widthRatio);
+      CurrentLine += char;
     }
-    return string;
+    string += CurrentLine.substring(0, width);
+    string += "\n";
+  }
+  return string;
+}
+
+const calculateTextLength = (text) => {
+  let length = 0;
+  for (const char of text) {
+    // 匹配中文和日文以及全角字符
+    if (char.match(/[\u4e00-\u9fa5]|[\u0800-\u4e00]|[\uff00-\uffff]/)) {
+      length += 2;
+    } else {
+      length += 1;
+    }
+  }
+  return length;
 }
 
 function run() {
-    fs.readFile("data.txt", "utf8", (err, data) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
+  const data = fs.readFileSync("data.txt", "utf8");
 
-        let frames = data.split("\n\n");
+  let frames = data.split("\n\n");
 
-        let index = 0;
-        const startTime = Date.now();
-        gameloop.setGameLoop((delta) => {
-            let string = decompressFrame(frames[index]);
+  let index = 0;
+  const startTime = Date.now();
+  gameloop.setGameLoop((delta) => {
+    try {
+      let string = decompressFrame(frames[index]);
+      const time = (Date.now() - startTime) / 1000;
+      const fps = `FPS: ${(index / ((Date.now() - startTime) / 1000)).toFixed(2)} / ${Math.floor(time/60)}:${(time%60).toFixed(2)}`
+      const [jp, cn] = getLyrics(time)
+      const width = process.stdout.columns;
+      const halfWidth = Math.floor((width - fps.length) / 2)
 
-            readline.clearLine(process.stdout, -1);
-            readline.cursorTo(process.stdout, 0, 2);
-            process.stdout.write(string);
-            process.stdout.write(
-                `Frame: ${index}  |  FPS: ${index / ((Date.now() - startTime) / 1000)} \n`
-            );
-
-            index++;
-        }, 1000 / 30);
-    });
+      readline.clearLine(process.stdout, -1);
+      readline.cursorTo(process.stdout, 0, 2);
+      process.stdout.write(string);
+      process.stdout.write(`${jp}${" ".repeat(halfWidth - calculateTextLength(jp))}${fps}${" ".repeat(halfWidth - calculateTextLength(cn))}${cn}\n`);
+      
+      index++;
+    } catch (error) {
+      gameloop.clearGameLoop();
+    }
+  }, 1000 / 30);
 }
+
+run();
