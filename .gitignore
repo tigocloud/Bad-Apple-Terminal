@@ -126,5 +126,7 @@ dist
 
 # End of https://www.toptal.com/developers/gitignore/api/node,vscode
 
-data.txt
-frames/
+
+.idea
+#data.txt
+#frames/
