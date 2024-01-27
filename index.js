@@ -75,18 +75,25 @@ const calculateTextLength = (text) => {
   return length;
 }
 
-function run() {
+const sleep = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function run() {
   const data = fs.readFileSync("data.txt", "utf8");
 
   let frames = data.split("\n\n");
 
   let index = 0;
   const startTime = Date.now();
-  gameloop.setGameLoop((delta) => {
+  const millisecondsPerFrame = 1000 / 30;
+  
+  while (true) {
     try {
+      const start = Date.now();
       let string = decompressFrame(frames[index]);
-      const time = (Date.now() - startTime) / 1000;
-      const fps = `FPS: ${(index / ((Date.now() - startTime) / 1000)).toFixed(2)} / ${Math.floor(time/60)}:${(time%60).toFixed(2)}`
+      const time = (start - startTime) / 1000;
+      const fps = `FPS: ${(index / ((start - startTime) / 1000)).toFixed(2)} / ${Math.floor(time/60)}:${(time%60).toFixed(2)}`
       const [jp, cn] = getLyrics(time)
       const width = process.stdout.columns;
       const halfWidth = Math.floor((width - fps.length) / 2)
@@ -97,10 +104,14 @@ function run() {
       process.stdout.write(`${jp}${" ".repeat(halfWidth - calculateTextLength(jp))}${fps}${" ".repeat(halfWidth - calculateTextLength(cn))}${cn}\n`);
       
       index++;
+
+      const took = (Date.now() - start)
+      const sleepTime = Math.max(millisecondsPerFrame - took, 0)
+      await sleep(sleepTime * 0.9);
     } catch (error) {
-      gameloop.clearGameLoop();
+      break
     }
-  }, 1000 / 30);
+  }
 }
 
 run();
