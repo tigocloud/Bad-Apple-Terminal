@@ -54,7 +54,7 @@ function decompressFrame(frame) {
     let CurrentLine = "";
     for (let token of tokens) {
       let multiplier = parseInt(token.substring(1));
-      char = token[0].repeat((multiplier / widthRatio)|0);
+      char = token[0].repeat(Math.ceil(multiplier / widthRatio));
       CurrentLine += char;
     }
     string += `${CurrentLine.substring(0, width)}\n`
