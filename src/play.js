@@ -136,7 +136,7 @@ function run() {
 	let index = 0;
 	const startTime = Date.now();
 
-	new PrecisionTimer(async () => {
+	const timer = new PrecisionTimer(async () => {
 		try {
 			const start = Date.now();
 			let string = decompressFrame(frames[index]);
@@ -158,8 +158,9 @@ function run() {
 
 			index++;
 		} catch (error) {
-			console.log(error);
-			process.exit(0);
+			// console.log(error);
+			// process.exit(0);
+      timer.cancel()
 		}
 	}, 1000 / 30);
 }

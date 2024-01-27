@@ -4,9 +4,8 @@
     "description": "A nodejs script for playing BadApple in the terminal",
     "main": "index.js",
     "scripts": {
-        "extract": "node extractFrames",
-        "build": "node build",
-        "start": "node index"
+        "build": "node ./src/make.js",
+        "play": "node ./src/play.js"
     },
     "author": "KineticTactic",
     "license": "MIT",
