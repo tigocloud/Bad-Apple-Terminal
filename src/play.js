@@ -1,8 +1,9 @@
 const readline = require("readline");
 const fs = require("fs");
+const path = require("path");
 
-const jpLyrics = fs.readFileSync("jp.txt", "utf8").split("\n");
-const cnLyrics = fs.readFileSync("cn.txt", "utf8").split("\n");
+const jpLyrics = fs.readFileSync(path.join(__dirname, "./data/jp.txt"), "utf8").split("\n");
+const cnLyrics = fs.readFileSync(path.join(__dirname, "./data/cn.txt"), "utf8").split("\n");
 
 class PrecisionTimer {
 	count = 0;
@@ -47,11 +48,17 @@ class PrecisionTimer {
 	}
 }
 
+const lyricIndex = {
+	cn: 0,
+	jp: 0,
+};
+
 const getLyrics = (time) => {
 	let jp = "";
 	let cn = "";
 
-	for (const line of jpLyrics) {
+	for (let index = lyricIndex.jp; index < jpLyrics.length; index++) {
+    const line = jpLyrics[index];
 		let [timestamp, lyric] = line.split("]").map((s) => s.trim().replace("[", ""));
 		let [min, sec] = timestamp.split(":").map((s) => parseInt(s));
 		timestamp = min * 60 + sec;
@@ -63,7 +70,8 @@ const getLyrics = (time) => {
 		}
 	}
 
-	for (const line of cnLyrics) {
+	for (let index = lyricIndex.cn; index < cnLyrics.length; index++) {
+    const line = cnLyrics[index];
 		let [timestamp, lyric] = line.split("]").map((s) => s.trim().replace("[", ""));
 		let [min, sec] = timestamp.split(":").map((s) => parseInt(s));
 		timestamp = min * 60 + sec;
@@ -106,21 +114,18 @@ function decompressFrame(frame) {
 }
 
 const calculateTextLength = (text) => {
-	return text.replace(/[^\x00-\xff]/g, "**").length;
+	// return text.replace(/[^\x00-\xff]/g, "**").length;
 
+	// 这样速度真的更快，别用上面那个了，球球了
 	let length = 0;
 	for (const char of text) {
-		if (char.match(/[\u4e00-\u9fa5]|[\u0800-\u4e00]|[\uff00-\uffff]/)) {
+		if (char.match(/[^\x00-\xff]/)) {
 			length += 2;
 		} else {
 			length += 1;
 		}
 	}
 	return length;
-};
-
-const sleep = (ms) => {
-	return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
 function run() {
@@ -142,13 +147,13 @@ function run() {
 			const [jp, cn] = getLyrics(time);
 			const halfWidth = Math.floor((width - fps.length) / 2);
 
-			readline.clearLine(process.stdout, -1);
-			readline.cursorTo(process.stdout, 0, 2);
+			// readline.clearLine(process.stdout, -1);
+			readline.cursorTo(process.stdout, 0, 0);
 			process.stdout.write(string);
 			process.stdout.write(
 				`${jp}${" ".repeat(halfWidth - calculateTextLength(jp))}${fps}${" ".repeat(
 					halfWidth - calculateTextLength(cn)
-				)}${cn}\n`
+				)}${cn}`
 			);
 
 			index++;

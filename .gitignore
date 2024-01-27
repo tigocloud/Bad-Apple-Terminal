@@ -128,5 +128,4 @@ dist
 
 
 .idea
-#data.txt
-#frames/
+frames/
